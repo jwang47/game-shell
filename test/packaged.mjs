@@ -86,6 +86,7 @@ try {
     return result.result.value;
   };
   const settings = await evaluate('gameShell.get()');
+  assert.ok(settings, `Setup authorization rejected: ${JSON.stringify({ page: await evaluate('location.href'), appDir, realAppDir: fs.realpathSync.native(appDir) })}`);
   assert.equal(settings.url, '');
   assert.deepEqual(settings.sites, []);
   // Use the actual setup UI bridge to navigate into the local game fixture.
