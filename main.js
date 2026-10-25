@@ -313,7 +313,10 @@ function createWindow(startUrl) {
     webPreferences: {
       partition: PARTITION, // keep logins between runs
       preload: path.join(__dirname, 'preload.js'),
-      additionalArguments: LOW_LATENCY ? ['--gameshell-low-latency'] : [],
+      additionalArguments: [
+        ...(LOW_LATENCY ? ['--gameshell-low-latency'] : []),
+        ...(arg('pause-on-blur') ? ['--gameshell-pause-on-blur'] : []),
+      ],
       backgroundThrottling: false,
       contextIsolation: true,
       sandbox: true,
@@ -322,6 +325,9 @@ function createWindow(startUrl) {
   win.setMenu(null);
   if (saved.maximized) win.maximize();
   win.on('close', saveBounds);
+  // After a UAC prompt or Alt+Tab, give the page keyboard focus again so keys
+  // work without a click.
+  win.on('focus', () => win.webContents.focus());
 
   // Some sign-in providers refuse user agents that name Electron.
   const ua = win.webContents.getUserAgent()

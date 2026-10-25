@@ -21,6 +21,35 @@ if (process.argv.includes('--gameshell-low-latency') && location.protocol !== 'f
   });
 }
 
+// Keep focus (default; off with --pause-on-blur): a UAC prompt, Alt+Tab or a
+// notification must not pause the game. The page always looks focused and
+// visible, and keys still held when the window loses focus get a key-up, so
+// nothing sticks while the real key-up goes elsewhere.
+if (!process.argv.includes('--gameshell-pause-on-blur') && location.protocol !== 'file:') {
+  contextBridge.executeInMainWorld({
+    func: () => {
+      const held = new Map();
+      addEventListener('keydown', (e) => {
+        if (e.isTrusted) held.set(e.code, { key: e.key, code: e.code, keyCode: e.keyCode, which: e.which, location: e.location });
+      }, true);
+      addEventListener('keyup', (e) => {
+        if (e.isTrusted) held.delete(e.code);
+      }, true);
+      addEventListener('blur', (e) => {
+        if (e.target !== window) return;
+        e.stopImmediatePropagation();
+        const target = document.activeElement || document.body || document;
+        for (const init of held.values()) target.dispatchEvent(new KeyboardEvent('keyup', { ...init, bubbles: true, cancelable: true }));
+        held.clear();
+      }, true);
+      document.addEventListener('visibilitychange', (e) => e.stopImmediatePropagation(), true);
+      Object.defineProperty(Document.prototype, 'hidden', { get: () => false, configurable: true });
+      Object.defineProperty(Document.prototype, 'visibilityState', { get: () => 'visible', configurable: true });
+      Document.prototype.hasFocus = () => true;
+    },
+  });
+}
+
 if (location.protocol === 'file:') {
   contextBridge.exposeInMainWorld('gameShell', {
     get: () => ipcRenderer.invoke('setup:get'),

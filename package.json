@@ -9,7 +9,7 @@
     "postinstall": "node node_modules/electron/install.js",
     "start": "electron .",
     "pack": "node pack.mjs",
-    "test": "node test/login.mjs && node test/popup.mjs && node test/low-latency.mjs"
+    "test": "node test/login.mjs && node test/popup.mjs && node test/low-latency.mjs && node test/focus.mjs"
   },
   "devDependencies": {
     "@electron/packager": "^20.3.0",

@@ -63,6 +63,7 @@ Electron has no Chrome password manager, so the app has its own:
 | CPU | Sets every app process (main, GPU, renderer, utility) to `HIGH` priority. Every 5 s it checks again and sets new or reset processes. | `REALTIME` needs admin and can freeze input, so it is not offered. |
 | Background | Turns off Chromium background, timer and occluded-window throttling, and Windows 11 Efficiency mode (EcoQoS). The game runs at full rate when it does not have focus. | — |
 | Fullscreen and Do Not Disturb | Starts in borderless fullscreen, like a normal game (F11 switches to windowed, and the app remembers it). While the game is fullscreen and in front, Windows turns on Do Not Disturb by its rule "When using an app in full-screen mode". Alt+Tab works as usual; the game keeps running at full speed behind other windows. **Ctrl+Alt+B** brings the window back from anywhere. | The rule must be on: Settings > System > Notifications > Turn on do not disturb automatically (on by default in Windows 11). Windows has no public API that lets an app turn on Do Not Disturb itself. |
+| Interruptions | A UAC prompt, Alt+Tab or a notification does not pause the game: the page always reports focused and visible (`document.hasFocus()`, `document.hidden`, `visibilitychange`, window `blur`). Keys held when the window loses focus get a key-up, so none stick. When the window gets focus back, the page gets keyboard focus without a click. `--pause-on-blur` turns this off. | The game also keeps running while you are in another window. Windows' UAC prompt still takes over the screen; no app can stop that. |
 | GPU | Uses the high-performance GPU, forces GPU rasterization and zero-copy, and turns on WebGPU. `--ignore-gpu-blocklist` also skips Chromium's bad-driver list. | The app cannot change GPU clocks or GPU scheduling priority. |
 | Frame rate | Normally limited to the display refresh rate (vsync). `--uncapped-fps` removes the limit. | Measured: alone, it fills the frame queue and makes input much slower (median 220 ms). See [docs/latency.md](docs/latency.md). |
 | Memory | V8 heap up to 4096 MB (`--heap-mb=N`). | — |
@@ -90,6 +91,7 @@ Give flags to `npm start -- <flags>` or to `GameShell.exe`.
 | `--url=URL` | Open this URL and remember it |
 | `--priority=high\|abovenormal\|normal` | CPU priority (default `high`) |
 | `--windowed` | Start windowed instead of fullscreen |
+| `--pause-on-blur` | Let the game see focus loss (window `blur`, hidden page) as in a browser |
 | `--angle=d3d11\|vulkan\|gl` | WebGL backend (default `d3d11`). With `vulkan`, WebGPU finds no adapter. |
 | `--uncapped-fps` | Remove the vsync frame limit. Not recommended: alone it made key-to-screen latency much worse. |
 | `--low-latency` | Ask every WebGL and 2D canvas for `desynchronized` presentation, which skips Chromium's compositor. Measured: 23 ms median key-to-screen, against 38 ms without it and 43 ms in Chrome ([docs/latency.md](docs/latency.md)). Off by default: in a real game it caused visible frame stutter and skipped frames. |
@@ -100,7 +102,7 @@ Give flags to `npm start -- <flags>` or to `GameShell.exe`.
 
 ## Check
 
-- `npm test` runs the login, popup and low-latency checks in hidden windows
+- `npm test` runs the login, popup, low-latency and focus checks in hidden windows
   (`GAMESHELL_TEST=1`) against local test pages. It needs no account, and it
   opens no visible window.
 - `npx electron . --smoke-test --url=URL` must exit 0. All process priorities
