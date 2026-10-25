@@ -196,7 +196,9 @@ token) and, to avoid SmartScreen warnings, a code-signing certificate.
 Checks:
 
 - GitHub Actions runs `npm ci` and `npm test` on Windows for pushes and pull
-  requests, using the Node version in `.nvmrc`.
+  requests, using the Node version in `.nvmrc`. Canvas option forwarding is
+  checked without a GPU; the WebGL presentation check is skipped explicitly
+  on hosts that cannot create a WebGL context.
 
 - `npm test` runs the persistence, keyguard, login, popup, low-latency, focus and keys
   checks in hidden windows against local test pages. It needs no account and
