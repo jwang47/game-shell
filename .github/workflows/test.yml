@@ -25,3 +25,5 @@ jobs:
       - run: npm ci
       - run: npm audit --audit-level=high
       - run: npm test
+      - run: npm run pack
+      - run: npm run test:packaged

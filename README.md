@@ -167,6 +167,7 @@ scripts are allowed in `package.json`).
 | `npm start` | Run from source (`npm start -- --url=URL --windowed`) |
 | `npm test` | Hidden checks (see [Development](#development)) |
 | `npm run pack` | Build `dist\GameShell-win32-x64\GameShell.exe` |
+| `npm run test:packaged` | Smoke-test the built Windows app in a hidden window (run `npm run pack` first) |
 | `npm run release` | Build and zip it as `dist\GameShell-<version>-win32-x64.zip` |
 
 `node pack.mjs OUT` builds into another folder, for example while the exe in
@@ -199,6 +200,11 @@ Checks:
   requests, using the Node version in `.nvmrc`. Canvas option forwarding is
   checked without a GPU; the WebGL presentation check is skipped explicitly
   on hosts that cannot create a WebGL context.
+- CI also builds the Windows distribution and runs `npm run test:packaged`.
+  This copies the build outside the checkout to prevent missing dependencies
+  from resolving through the source tree. It checks native keyguard loading,
+  the bundled setup page and preload, navigation to a local game, renderer
+  isolation, settings persistence, and clean shutdown with a temporary profile.
 
 - `npm test` runs the security, persistence, keyguard, login, popup, low-latency, focus and keys
   checks in hidden windows against local test pages. It needs no account and
