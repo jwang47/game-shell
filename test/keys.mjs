@@ -35,11 +35,14 @@ const press = async (key, code, vk) => {
 };
 
 const out = {};
+// Hidden hosted-runner windows may have no focused renderer for CDP input.
+await send('Emulation.setFocusEmulationEnabled', { enabled: true });
 const nonce = await ev('nonce');
 await press('F5', 'F5', 116);
 await press('F12', 'F12', 123);
 await sleep(500);
-out.fKeysReachGame = (await ev('keys.join()')) === 'F5,F12';
+out.receivedKeys = await ev('keys.join()');
+out.fKeysReachGame = out.receivedKeys === 'F5,F12';
 out.noReload = (await ev('nonce')) === nonce;
 await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 100, y: 100 });
 await sleep(300);
@@ -53,6 +56,6 @@ out.cursorBackOnMove = (await ev("getComputedStyle(document.body).cursor")) !== 
 console.log(JSON.stringify(out));
 child.kill();
 srv.close();
-const ok = Object.values(out).every(Boolean);
+const ok = Object.entries(out).filter(([key]) => key !== 'receivedKeys').every(([, value]) => value === true);
 console.log(`keys: ${ok ? 'pass' : 'FAIL'}`);
 process.exit(ok ? 0 : 1);
