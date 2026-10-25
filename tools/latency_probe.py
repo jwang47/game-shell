@@ -87,11 +87,31 @@ def main():
     ap.add_argument("--presses", type=int, default=200)
     ap.add_argument("--region", default="8,8,40,40", help="left,top,right,bottom in screen pixels")
     ap.add_argument("--timeout-ms", type=float, default=250)
+    ap.add_argument("--keys-only", type=float, default=0, metavar="SECONDS",
+                    help="only press keys for this long; no screen capture")
     a = ap.parse_args()
 
     if not bring_to_front(a.title):
         print(json.dumps({"error": f"could not bring '{a.title}' to the front"}))
         return 1
+    if a.keys_only:
+        # No screen capture (it can stop G-SYNC and independent flip): just
+        # press keys for PresentMon's input-to-photon tracking.
+        presses, lost_focus = 0, 0
+        end = time.perf_counter() + a.keys_only
+        while time.perf_counter() < end:
+            if a.title not in window_title(user32.GetForegroundWindow()):
+                lost_focus += 1
+                if not bring_to_front(a.title):
+                    break
+            key(VK_RIGHT)
+            time.sleep(0.03)
+            key(VK_RIGHT, up=True)
+            presses += 1
+            time.sleep(random.uniform(0.06, 0.12))
+        print(json.dumps({"presses": presses, "lost_focus": lost_focus}))
+        return 0
+
     region = tuple(int(v) for v in a.region.split(","))
     cam = dxcam.create(output_idx=0, output_color="GRAY")
 

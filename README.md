@@ -117,7 +117,9 @@ Give flags to `npm start -- <flags>` or to `GameShell.exe`.
 `node tools/latency.mjs` compares GameShell modes with Chrome, from a real
 key press to the change on screen. It needs Chrome and a Python environment
 with `dxcam` (see the top of the file). It takes over the screen and keyboard
-for a few minutes. Results and method: [docs/latency.md](docs/latency.md).
+for a few minutes. `node tools/pacing.mjs` measures frame pacing with
+PresentMon (one UAC prompt; put PresentMon 2.6.0 in `tools/bin`). Results and
+method: [docs/latency.md](docs/latency.md).
 
 ## Changes that must be made in the game
 

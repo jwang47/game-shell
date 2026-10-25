@@ -69,4 +69,30 @@ stutter and skipped frames, which this test does not measure.
   could hide a gain that only shows without capture.
 - The test measures latency only, not frame pacing. `desynchronized`
   presentation made a real game stutter and skip frames, so it stays opt-in.
-  A frame-pacing test (present-to-present intervals) would show that cost.
+  The frame-pacing test below shows why.
+
+# Frame pacing
+
+Measured 2026-10-25 with `tools/pacing.mjs`: PresentMon 2.6.0 records every
+present, with no screen capture. Each arm runs the same scene fullscreen for
+20 s while Right-arrow is pressed at random intervals. G-SYNC Compatible was
+on (MSI MAG 321UP OLED, windowed and full screen mode). Same machine as above.
+
+| Arm | Present mode | fps | Dropped | Displayed time median / sd | CPU start to display (median) |
+| --- | --- | --- | --- | --- | --- |
+| Chrome | Hardware Composed: Independent Flip | 164 | 0.10% | 6.06 / 0.03 ms | 17.5 ms |
+| GameShell | Hardware Composed: Independent Flip | 165 | 0.00% | 6.06 / 0.02 ms | 17.7 ms |
+| GameShell `--low-latency` | Composed: Flip | 165 | 0.10% | 6.06 / 0.29 ms | 17.5 ms |
+
+- **`--low-latency` leaves the independent-flip path.** The desynchronized
+  canvas is presented through DWM composition (Composed: Flip), and the time
+  each frame stays on screen varies 10 times more. In this light scene that
+  is only a few dropped frames. In a heavier game, with frame times that vary,
+  it gives the stutter that was seen.
+- **G-SYNC does not change anything at full frame rate.** Every arm renders
+  at the 165 Hz cap, so each frame stays on screen for 6.06 ms, the same as
+  fixed vsync. Variable refresh only cuts latency when the frame rate stays a
+  little below the refresh rate.
+- PresentMon 2.6 did not time the key presses (they are sent with
+  `SendInput`), so its input-to-photon column is empty. Latency comes from
+  `tools/latency.mjs`.
