@@ -30,7 +30,7 @@ const paths = await packager({
     /^\/node_modules\/@koromix\/(?!koffi-win32-x64(\/|$))/,
     /^\/node_modules\/koffi\/(doc|vendor|lib)(\/|$)/,
     /^\/dist[^/]*(\/|$)/, /^\/(tools|test|docs|logs)(\/|$)/, /^\/assets\/icon\.ico$/,
-    /^\/\.np?mrc$/, /^\/\.nvmrc$/, /^\/pack\.mjs$/, /^\/README\.md$/, /^\/\.gitignore$/,
+    /^\/\.np?mrc$/, /^\/\.nvmrc$/, /^\/(pack|installer)\.mjs$/, /^\/README\.md$/, /^\/\.gitignore$/, /^\/\.github(\/|$)/,
   ],
 });
 console.log(`built ${paths.join(', ')}`);
