@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'">
+<title>GameShell setup</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0d0f12; color: #e6e8eb; font: 15px/1.5 system-ui, sans-serif; }
+  main { width: min(560px, calc(100vw - 32px)); }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p { color: #9aa1aa; margin: 0 0 20px; }
+  form { display: flex; gap: 8px; }
+  input { flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid #2b3036; background: #15181c; color: inherit; font: inherit; }
+  input:focus { outline: 2px solid #4c8dff; outline-offset: 1px; }
+  button { padding: 10px 16px; border-radius: 8px; border: 0; background: #4c8dff; color: #fff; font: inherit; cursor: pointer; }
+  button.quiet { background: #23272d; padding: 4px 10px; font-size: 13px; }
+  #error { color: #ff7b72; min-height: 1.5em; margin-top: 6px; }
+  h2 { font-size: 15px; margin: 28px 0 8px; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px solid #1f2328; }
+  .keys { color: #6f7781; font-size: 13px; margin-top: 28px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>GameShell</h1>
+  <p>Enter the address of the game to open. Press Ctrl+, to come back here later.</p>
+  <form id="form">
+    <input id="url" type="url" placeholder="https://example.com/" required autofocus>
+    <button>Open</button>
+  </form>
+  <div id="error"></div>
+  <h2>Saved passwords</h2>
+  <ul id="sites"><li>None</li></ul>
+  <div class="keys">F11 fullscreen · F5 reload · F12 DevTools · Ctrl+Alt+B bring to front</div>
+</main>
+<script>
+  const $ = (id) => document.getElementById(id);
+  async function render() {
+    const state = await window.gameShell.get();
+    if (!$('url').value) $('url').value = state.url;
+    $('sites').replaceChildren(...(state.sites.length ? state.sites.map((origin) => {
+      const li = document.createElement('li');
+      li.textContent = origin;
+      const forget = document.createElement('button');
+      forget.className = 'quiet';
+      forget.textContent = 'Forget';
+      forget.onclick = async () => { await window.gameShell.forget(origin); render(); };
+      li.append(forget);
+      return li;
+    }) : [Object.assign(document.createElement('li'), { textContent: 'None' })]));
+  }
+  $('form').onsubmit = async (e) => {
+    e.preventDefault();
+    if (!(await window.gameShell.save($('url').value))) $('error').textContent = 'Enter a full http:// or https:// address.';
+  };
+  render();
+</script>
+</body>
+</html>
