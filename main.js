@@ -4,7 +4,7 @@ const { app, BrowserWindow, dialog, globalShortcut, ipcMain, powerSaveBlocker, s
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { pathToFileURL } = require('url');
+const { fileURLToPath } = require('url');
 const { createKeyguard } = require('./keyguard');
 
 function arg(name) {
@@ -212,7 +212,6 @@ app.on('web-contents-created', (_e, wc) => {
 
 // IPC is honored only from the main window's top frame: a web page for the
 // login calls, the exact bundled setup page for the setup calls.
-const SETUP_URL = pathToFileURL(SETUP_PAGE).href;
 function topFrameOfMain(e) {
   return win && e.sender === win.webContents && e.senderFrame && e.senderFrame === e.sender.mainFrame;
 }
@@ -220,7 +219,15 @@ function fromGame(e) {
   return topFrameOfMain(e) && /^https?:/.test(e.senderFrame.url);
 }
 function fromSetup(e) {
-  return topFrameOfMain(e) && e.senderFrame.url.split(/[?#]/)[0] === SETUP_URL;
+  if (!topFrameOfMain(e)) return false;
+  try {
+    // Chromium and Electron may spell the same Windows path differently
+    // (e.g. RUNNER~1 versus runneradmin). Resolve both to the actual file.
+    const file = fileURLToPath(e.senderFrame.url.split(/[?#]/)[0]);
+    return fs.realpathSync(file) === fs.realpathSync(SETUP_PAGE);
+  } catch {
+    return false; // non-file URLs, missing files, or an unreadable path
+  }
 }
 
 function dropPending(id) {
