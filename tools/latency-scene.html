@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Latency scene</title>
+<style>html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }</style>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.181.0/build/three.module.min.js" } }</script>
+</head>
+<body>
+<script type="module">
+// A three.js scene that redraws every frame and turns the camera on every
+// key press (arrow keys / WASD), so each input changes the next frame. 20k lit instanced cubes
+// give the GPU some real work.
+import * as THREE from 'three';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(innerWidth, innerHeight);
+document.body.append(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 500);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x223344, 1.2));
+const sun = new THREE.DirectionalLight(0xffffff, 2);
+sun.position.set(5, 10, 7);
+scene.add(sun);
+
+const COUNT = 20000;
+const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshStandardMaterial({ roughness: 0.4 }), COUNT);
+const m = new THREE.Matrix4();
+const color = new THREE.Color();
+for (let i = 0; i < COUNT; i++) {
+  m.makeTranslation((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 30, -Math.random() * 80 - 5);
+  mesh.setMatrixAt(i, m);
+  mesh.setColorAt(i, color.setHSL(Math.random(), 0.6, 0.55));
+}
+scene.add(mesh);
+
+let yaw = 0;
+let pitch = 0;
+const TURN = { ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0], ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1] };
+addEventListener('keydown', (e) => {
+  const d = TURN[e.code];
+  if (!d) return;
+  yaw = Math.max(-0.4, Math.min(0.4, yaw + d[0] * 0.02));
+  pitch = Math.max(-0.25, Math.min(0.25, pitch + d[1] * 0.02));
+});
+// Marker for tools/latency_probe.py: a 64 px square in the top-left corner
+// that flips black <-> white on each key press. Like a game, the frame loop
+// applies the input on its next frame.
+const hud = new THREE.Scene();
+const hudCamera = new THREE.OrthographicCamera(0, innerWidth, innerHeight, 0, -1, 1);
+const marker = new THREE.Mesh(new THREE.PlaneGeometry(64, 64), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+marker.position.set(32, innerHeight - 32, 0);
+hud.add(marker);
+let markerWhite = false;
+addEventListener('keydown', (e) => {
+  if (!e.repeat) markerWhite = !markerWhite;
+});
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  hudCamera.right = innerWidth;
+  hudCamera.top = innerHeight;
+  hudCamera.updateProjectionMatrix();
+  marker.position.set(32, innerHeight - 32, 0);
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+window.__frames = 0;
+window.__ready = false;
+window.__context = renderer.getContext().getContextAttributes();
+renderer.autoClear = false;
+renderer.setAnimationLoop((t) => {
+  camera.rotation.set(-pitch, -yaw, 0);
+  mesh.rotation.z = t * 0.0001;
+  marker.material.color.setHex(markerWhite ? 0xffffff : 0x000000);
+  renderer.clear();
+  renderer.render(scene, camera);
+  renderer.clearDepth();
+  renderer.render(hud, hudCamera);
+  window.__frames++;
+  window.__ready = true;
+});
+</script>
+</body>
+</html>

@@ -64,7 +64,7 @@ Electron has no Chrome password manager, so the app has its own:
 | Background | Turns off Chromium background, timer and occluded-window throttling, and Windows 11 Efficiency mode (EcoQoS). The game runs at full rate when it does not have focus. | — |
 | Fullscreen and Do Not Disturb | Starts in borderless fullscreen, like a normal game (F11 switches to windowed, and the app remembers it). While the game is fullscreen and in front, Windows turns on Do Not Disturb by its rule "When using an app in full-screen mode". Alt+Tab works as usual; the game keeps running at full speed behind other windows. **Ctrl+Alt+B** brings the window back from anywhere. | The rule must be on: Settings > System > Notifications > Turn on do not disturb automatically (on by default in Windows 11). Windows has no public API that lets an app turn on Do Not Disturb itself. |
 | GPU | Uses the high-performance GPU, forces GPU rasterization and zero-copy, and turns on WebGPU. `--ignore-gpu-blocklist` also skips Chromium's bad-driver list. | The app cannot change GPU clocks or GPU scheduling priority. |
-| Frame rate | Normally limited to the display refresh rate (vsync). `--uncapped-fps` removes the limit. | With no limit, the image can tear and the GPU runs at full power. |
+| Frame rate | Normally limited to the display refresh rate (vsync). `--uncapped-fps` removes the limit. | Measured: alone, it fills the frame queue and makes input much slower (median 220 ms). See [docs/latency.md](docs/latency.md). |
 | Memory | V8 heap up to 4096 MB (`--heap-mb=N`). | — |
 | Audio | Audio can play before the first click. | — |
 | Network | If the page fails to load, the app tries again after 3 s. A newer navigation cancels the retry. | — |
@@ -91,8 +91,8 @@ Give flags to `npm start -- <flags>` or to `GameShell.exe`.
 | `--priority=high\|abovenormal\|normal` | CPU priority (default `high`) |
 | `--windowed` | Start windowed instead of fullscreen |
 | `--angle=d3d11\|vulkan\|gl` | WebGL backend (default `d3d11`). With `vulkan`, WebGPU finds no adapter. |
-| `--uncapped-fps` | Remove the vsync frame limit |
-| `--low-latency` | Ask every WebGL and 2D canvas for `desynchronized` (low-latency) presentation, which can skip a compositor step. Not measured yet. |
+| `--uncapped-fps` | Remove the vsync frame limit. Not recommended: alone it made key-to-screen latency much worse. |
+| `--low-latency` | Ask every WebGL and 2D canvas for `desynchronized` (low-latency) presentation, which skips Chromium's compositor. Measured: 23 ms median key-to-screen, against 38 ms without it and 43 ms in Chrome ([docs/latency.md](docs/latency.md)). Check the game for tearing. |
 | `--ignore-gpu-blocklist` | Use GPU features that Chromium turns off for known bad drivers |
 | `--fps` | Show Chromium's FPS counter, to compare settings |
 | `--heap-mb=N` | V8 heap limit in MB |
@@ -110,6 +110,13 @@ Give flags to `npm start -- <flags>` or to `GameShell.exe`.
   `--remote-debugging-port=N` to drive a login flow over the DevTools
   protocol without a visible window.
 
+## Latency benchmark
+
+`node tools/latency.mjs` compares GameShell modes with Chrome, from a real
+key press to the change on screen. It needs Chrome and a Python environment
+with `dxcam` (see the top of the file). It takes over the screen and keyboard
+for a few minutes. Results and method: [docs/latency.md](docs/latency.md).
+
 ## Changes that must be made in the game
 
 These have a larger effect than any setting in the shell:
@@ -119,6 +126,8 @@ These have a larger effect than any setting in the shell:
 - `requestPointerLock({ unadjustedMovement: true })` for raw mouse input with
   no OS acceleration.
 - Use `WebGPURenderer` if the game supports it.
+- Create the WebGL context with `desynchronized: true`. Then every browser,
+  Chrome included, gets the `--low-latency` gain.
 
 ## Security
 

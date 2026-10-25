@@ -12,6 +12,6 @@ const paths = await packager({
   overwrite: true,
   prune: false, // the app has no runtime dependencies
   // Paths are relative to the app folder and start with "/" on every platform.
-  ignore: [/^\/node_modules(\/|$)/, /^\/dist[^/]*(\/|$)/, /^\/(tools|test)(\/|$)/, /^\/\.np?mrc$/, /^\/\.nvmrc$/, /^\/pack\.mjs$/, /^\/README\.md$/, /^\/\.gitignore$/],
+  ignore: [/^\/node_modules(\/|$)/, /^\/dist[^/]*(\/|$)/, /^\/(tools|test|docs|logs)(\/|$)/, /^\/\.np?mrc$/, /^\/\.nvmrc$/, /^\/pack\.mjs$/, /^\/README\.md$/, /^\/\.gitignore$/],
 });
 console.log(`built ${paths.join(', ')}`);
