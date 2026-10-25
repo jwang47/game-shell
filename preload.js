@@ -91,7 +91,11 @@ if (location.protocol === 'file:') {
     observer?.disconnect();
     saved = saved ?? (await ipcRenderer.invoke('login:get'));
     if (!saved) return;
-    fill(usernameFor(password), saved.username);
+    // Never pair a stored password with another account already in the form.
+    // Recheck after IPC too: the user or page may have edited it while waiting.
+    const username = usernameFor(password);
+    if (!visible(password) || (username?.value && username.value !== saved.username)) return;
+    fill(username, saved.username);
     fill(password, saved.password);
   }
 

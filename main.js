@@ -148,8 +148,7 @@ function savedLogin(origin) {
 // verified: the page changed in place (no navigation) and the login form went
 // away. After a navigation the app cannot be sure, so it asks differently.
 async function offerToSave(login, verified) {
-  const all = readJson(PASSWORDS, {});
-  const entry = all[login.origin];
+  const entry = readJson(PASSWORDS, {})[login.origin];
   if (entry?.never) return;
   const current = savedLogin(login.origin);
   if (current && current.username === login.username && current.password === login.password) return;
@@ -168,6 +167,10 @@ async function offerToSave(login, verified) {
     }));
   }
   if (choice === 1) return;
+  // The dialog is asynchronous: preserve saves/deletions made while it was
+  // open, and do not undo a newer decision for this same origin.
+  const all = readJson(PASSWORDS, {});
+  if (JSON.stringify(all[login.origin]) !== JSON.stringify(entry)) return;
   all[login.origin] = choice === 2
     ? { never: true }
     : { username: login.username, password: safeStorage.encryptString(login.password).toString('base64') };
@@ -479,7 +482,20 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   // Write cookies to disk before exit so a fresh login is not lost.
-  app.on('before-quit', () => session.fromPartition(PARTITION).cookies.flushStore());
+  let flushingCookies = false;
+  let cookiesFlushed = false;
+  app.on('before-quit', (e) => {
+    if (cookiesFlushed) return;
+    e.preventDefault();
+    if (flushingCookies) return;
+    flushingCookies = true;
+    session.fromPartition(PARTITION).cookies.flushStore()
+      .catch((err) => console.warn(`could not flush cookies: ${err.message}`))
+      .finally(() => {
+        cookiesFlushed = true;
+        app.quit();
+      });
+  });
   // Put the accessibility shortcuts back and remove the keyboard hook.
   app.on('will-quit', () => keyguard?.dispose());
   app.on('window-all-closed', () => app.quit());

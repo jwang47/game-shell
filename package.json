@@ -9,7 +9,7 @@
     "postinstall": "node node_modules/electron/install.js",
     "start": "electron .",
     "pack": "node pack.mjs",
-    "test": "node test/keyguard.mjs && node test/login.mjs && node test/popup.mjs && node test/low-latency.mjs && node test/focus.mjs && node test/keys.mjs",
+    "test": "node test/persistence.mjs && node test/keyguard.mjs && node test/login.mjs && node test/popup.mjs && node test/low-latency.mjs && node test/focus.mjs && node test/keys.mjs",
     "release": "node pack.mjs --zip"
   },
   "devDependencies": {
