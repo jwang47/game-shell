@@ -74,12 +74,17 @@ async function runArm(name) {
     const start = Date.now();
     const probe = JSON.parse(execFileSync(PYTHON, [path.join(here, 'latency_probe.py'), '--keys-only', String(SECONDS)], { encoding: 'utf8', timeout: SECONDS * 1000 + 30000 }));
     const end = Date.now();
-    const browser = await (await fetch(`http://127.0.0.1:${PORT}/json/version`)).json();
-    const ws = new WebSocket(browser.webSocketDebuggerUrl);
-    await new Promise((r) => (ws.onopen = r));
-    ws.send(JSON.stringify({ id: 1, method: 'Browser.close' })); // Electron exits before it answers
-    await sleep(500);
-    ws.close();
+    // Close politely if the browser is still there; the kill below covers the rest.
+    try {
+      const browser = await (await fetch(`http://127.0.0.1:${PORT}/json/version`)).json();
+      const ws = new WebSocket(browser.webSocketDebuggerUrl);
+      await new Promise((r) => (ws.onopen = r));
+      ws.send(JSON.stringify({ id: 1, method: 'Browser.close' })); // Electron exits before it answers
+      await sleep(500);
+      ws.close();
+    } catch {
+      log(name, 'browser already closed');
+    }
     return { name, pids, start, end, ...probe };
   } finally {
     await sleep(500);

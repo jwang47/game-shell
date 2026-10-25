@@ -93,6 +93,30 @@ on (MSI MAG 321UP OLED, windowed and full screen mode). Same machine as above.
   at the 165 Hz cap, so each frame stays on screen for 6.06 ms, the same as
   fixed vsync. Variable refresh only cuts latency when the frame rate stays a
   little below the refresh rate.
-- PresentMon 2.6 did not time the key presses (they are sent with
+- PresentMon 2.6 did not time the key presses (see below) (they are sent with
   `SendInput`), so its input-to-photon column is empty. Latency comes from
   `tools/latency.mjs`.
+
+# NVIDIA Low Latency Mode: Ultra
+
+Measured 2026-10-25 with `tools/latency.mjs` (2 runs × 150 presses per
+arm). NVIDIA Control Panel program settings for `electron.exe` and
+`GameShell.exe`: Low Latency Mode = Ultra, Vertical sync = On. G-SYNC
+Compatible on. Chrome (`chrome.exe`) had no program setting, so it is the
+control.
+
+| Arm | Median ms (95% CI), Ultra | Median ms before | Frame rate |
+| --- | --- | --- | --- |
+| Chrome (control) | 39.0 (38.7–39.1) | 43.4 | 166 |
+| GameShell | 38.7 (38.6–38.8) | 37.9 | 166 |
+| GameShell `--low-latency` | 23.4 (23.3–23.6) | 23.1 | 165 |
+
+- **Ultra did not change GameShell.** The latency stayed the same, and the
+  frame rate stayed at 166. With G-SYNC and vsync, Ultra should cap the frame
+  rate just below the refresh rate; it did not. The setting does not seem to
+  apply to Chromium's presentation (D3D11 through ANGLE and DirectComposition).
+- The control moved from 43.4 to 39.0 ms between sessions, which shows the
+  session-to-session spread. Compare arms within one session.
+- The pacing run for this setting failed (the harness stopped when Chrome's
+  DevTools port was already closed; now fixed) and was not repeated, because
+  the frame rate and latency did not change.
