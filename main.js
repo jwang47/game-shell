@@ -25,9 +25,10 @@ const PRIORITIES = {
 };
 const PRIORITY_NAME = String(arg('priority') || 'high').toLowerCase();
 const PRIORITY = PRIORITIES[PRIORITY_NAME] ?? PRIORITIES.high;
-// Low latency: canvases ask for desynchronized (low-latency) presentation,
-// which can skip a compositor step. The preload applies it in the page.
-const LOW_LATENCY = !!arg('low-latency');
+// Low latency (on unless --no-low-latency): canvases ask for desynchronized
+// presentation, which skips Chromium's compositor (23 ms vs 38 ms key-to-
+// screen, docs/latency.md). The preload applies it in the page.
+const LOW_LATENCY = !arg('no-low-latency');
 
 // GPU: prefer the discrete GPU on hybrid laptops, rasterize on the GPU. The
 // driver blocklist is skipped only on request: it guards against bad drivers.

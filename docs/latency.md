@@ -39,6 +39,10 @@ A "miss" is a press that did not show on screen within 250 ms.
 | GameShell | `--uncapped-fps` | 220.6 (187.9–227.8) | 7.6 / 253.6 | 232.7 / 187.0 | 196 / 300 | 4200–4700 |
 | Chrome | `--disable-gpu-vsync --disable-frame-rate-limit` | 165.4 (5 samples) | — | — | 295 / 300 | 2300–2400 |
 
+Since this run, low latency is GameShell's default (`--no-low-latency`
+turns it off). The flags in the table are the ones used at the time;
+`tools/latency.mjs` now passes `--no-low-latency` to the plain arms.
+
 ## Findings
 
 - **`--low-latency` is the largest gain.** It is about 15 ms faster than
