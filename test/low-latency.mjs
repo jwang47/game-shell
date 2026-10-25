@@ -1,4 +1,4 @@
-// Low latency (the default) adds desynchronized to WebGL and 2D contexts, and keeps the page's other attributes.
+// --low-latency adds desynchronized to WebGL and 2D contexts, and keeps the page's other attributes.
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -12,7 +12,7 @@ window.c2 = b.getContext('2d').getContextAttributes();</script>`;
 const srv = http.createServer((q, r) => r.writeHead(200, { 'Content-Type': 'text/html' }).end(page)).listen(8766);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const out = {};
-for (const [name, extra] of [['off', ['--no-low-latency']], ['default', []]]) {
+for (const [name, extra] of [['off', []], ['on', ['--low-latency']]]) {
   fs.rmSync(profile, { recursive: true, force: true });
   const child = spawn(appDir + '/node_modules/electron/dist/electron.exe', [appDir, '--url=http://localhost:8766/', `--user-data-dir=${profile}`, '--remote-debugging-port=9336', ...extra], { env: { ...process.env, GAMESHELL_TEST: '1' }, stdio: 'ignore' });
   let t; for (let i = 0; i < 40 && !t; i++) { await sleep(250); try { t = (await (await fetch('http://127.0.0.1:9336/json')).json()).find((x) => x.type === 'page' && x.url.includes('8766')); } catch {} }
@@ -22,6 +22,6 @@ for (const [name, extra] of [['off', ['--no-low-latency']], ['default', []]]) {
   out[name] = v; child.kill(); await sleep(1500);
 }
 console.log(JSON.stringify(out)); srv.close();
-const ok = out.off.gl === false && out.off.c2 === false && out.default.gl === true && out.default.c2 === true && out.default.glAA === true;
+const ok = out.off.gl === false && out.off.c2 === false && out.on.gl === true && out.on.c2 === true && out.on.glAA === true;
 console.log(`low-latency: ${ok ? 'pass' : 'FAIL'}`);
 process.exit(ok ? 0 : 1);

@@ -92,7 +92,7 @@ Give flags to `npm start -- <flags>` or to `GameShell.exe`.
 | `--windowed` | Start windowed instead of fullscreen |
 | `--angle=d3d11\|vulkan\|gl` | WebGL backend (default `d3d11`). With `vulkan`, WebGPU finds no adapter. |
 | `--uncapped-fps` | Remove the vsync frame limit. Not recommended: alone it made key-to-screen latency much worse. |
-| `--no-low-latency` | Turn off low-latency presentation (on by default). By default every WebGL and 2D canvas asks for `desynchronized` presentation, which skips Chromium's compositor. Measured: 23 ms median key-to-screen, against 38 ms without it and 43 ms in Chrome ([docs/latency.md](docs/latency.md)). Turn it off if the game tears. |
+| `--low-latency` | Ask every WebGL and 2D canvas for `desynchronized` presentation, which skips Chromium's compositor. Measured: 23 ms median key-to-screen, against 38 ms without it and 43 ms in Chrome ([docs/latency.md](docs/latency.md)). Off by default: in a real game it caused visible frame stutter and skipped frames. |
 | `--ignore-gpu-blocklist` | Use GPU features that Chromium turns off for known bad drivers |
 | `--fps` | Show Chromium's FPS counter, to compare settings |
 | `--heap-mb=N` | V8 heap limit in MB |

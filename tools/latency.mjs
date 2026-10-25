@@ -35,11 +35,10 @@ const PORT = 9400;
 const ARMS = {
   chrome: { exe: CHROME, args: [] },
   'chrome-novsync': { exe: CHROME, args: ['--disable-gpu-vsync', '--disable-frame-rate-limit'] },
-  // Low latency is GameShell's default; the plain arms turn it off.
-  shell: { exe: ELECTRON, shell: true, args: ['--no-low-latency'] },
-  'shell-lowlat': { exe: ELECTRON, shell: true, args: [] },
-  'shell-novsync': { exe: ELECTRON, shell: true, args: ['--uncapped-fps', '--no-low-latency'] },
-  'shell-novsync-lowlat': { exe: ELECTRON, shell: true, args: ['--uncapped-fps'] },
+  shell: { exe: ELECTRON, shell: true, args: [] },
+  'shell-lowlat': { exe: ELECTRON, shell: true, args: ['--low-latency'] },
+  'shell-novsync': { exe: ELECTRON, shell: true, args: ['--uncapped-fps'] },
+  'shell-novsync-lowlat': { exe: ELECTRON, shell: true, args: ['--uncapped-fps', '--low-latency'] },
 };
 const armNames = opt.arms ? String(opt.arms).split(',') : Object.keys(ARMS);
 

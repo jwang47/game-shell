@@ -2,7 +2,7 @@
 // it exposes the settings API; on a web page it saves and fills logins.
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Low latency (default; off with --no-low-latency): before page scripts run, make every canvas context ask for
+// --low-latency: before page scripts run, make every canvas context ask for
 // desynchronized (low-latency) presentation. Runs in the page's own world so
 // three.js sees the patched getContext.
 if (process.argv.includes('--gameshell-low-latency') && location.protocol !== 'file:') {

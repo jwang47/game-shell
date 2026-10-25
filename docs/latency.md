@@ -39,9 +39,9 @@ A "miss" is a press that did not show on screen within 250 ms.
 | GameShell | `--uncapped-fps` | 220.6 (187.9–227.8) | 7.6 / 253.6 | 232.7 / 187.0 | 196 / 300 | 4200–4700 |
 | Chrome | `--disable-gpu-vsync --disable-frame-rate-limit` | 165.4 (5 samples) | — | — | 295 / 300 | 2300–2400 |
 
-Since this run, low latency is GameShell's default (`--no-low-latency`
-turns it off). The flags in the table are the ones used at the time;
-`tools/latency.mjs` now passes `--no-low-latency` to the plain arms.
+Low latency was made the default after this run and then turned back to
+opt-in (`--low-latency`): in a real three.js game it caused visible frame
+stutter and skipped frames, which this test does not measure.
 
 ## Findings
 
@@ -67,5 +67,6 @@ turns it off). The flags in the table are the ones used at the time;
   changing defaults.
 - Desktop duplication itself may stop full-screen independent flip, which
   could hide a gain that only shows without capture.
-- `desynchronized` presentation can tear in some setups. Look for tearing in
-  the real game before turning it on by default.
+- The test measures latency only, not frame pacing. `desynchronized`
+  presentation made a real game stutter and skip frames, so it stays opt-in.
+  A frame-pacing test (present-to-present intervals) would show that cost.
