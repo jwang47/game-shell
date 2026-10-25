@@ -24,13 +24,14 @@ const context = vm.createContext({
   require: (name) => name === 'electron' ? electron : name === './keyguard' ? {} : name === 'fs' ? {
     readFileSync: (file) => files.get(path.basename(file)) ?? '{}',
     writeFileSync: (file, value) => files.set(path.basename(file), value),
+    realpathSync: (file) => path.resolve(file).replace(/([\\/])APP~1(?=[\\/])/i, '$1app'),
   } : require(name),
   process: { argv: [], env: {} }, __dirname: '/app', Buffer, URL,
   console, setTimeout, clearTimeout,
 });
 vm.runInContext(fs.readFileSync(new URL('../main.js', import.meta.url), 'utf8') + `
   globalThis.setWindow = (value) => { win = value; };
-  globalThis.setupUrl = SETUP_URL;
+  globalThis.setupUrl = require('url').pathToFileURL(SETUP_PAGE).href;
 `, context);
 const frame = { url: 'https://game.test/login', origin: 'https://game.test' };
 const wc = { mainFrame: frame, id: 1 };
@@ -83,6 +84,11 @@ for (const e of [
 }
 assert.equal(invoke('login:get'), null, 'setup cannot retrieve plaintext passwords');
 const settings = invoke('setup:get');
+frame.url = context.setupUrl.replace('/app/', '/APP~1/');
+assert.ok(invoke('setup:get'), 'a short-path alias for the bundled setup page is authorized');
+frame.url = context.setupUrl + '?test=1#settings';
+assert.ok(invoke('setup:get'), 'setup query and fragment do not change its file identity');
+frame.url = context.setupUrl;
 assert.equal(settings.sites.includes('https://game.test'), true);
 assert.equal(JSON.stringify(settings).includes('secret'), false);
 for (const url of ['file:///C:/Windows/win.ini', 'javascript:alert(1)', 'data:text/html,hello', 'custom:foo', 'not a URL']) {
