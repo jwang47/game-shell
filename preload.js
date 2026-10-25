@@ -160,5 +160,15 @@ if (location.protocol === 'file:') {
     ipcRenderer.invoke('login:pending').then((pending) => {
       if (pending) watchResult({ goneMs: 2000, usableMs: 1000, maxMs: 10000 });
     });
+    // Hide the cursor after 2 s without mouse movement (main inserts the CSS);
+    // any movement or click shows it again.
+    let idleTimer;
+    const wake = () => {
+      document.documentElement.removeAttribute('data-gameshell-idle');
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => document.documentElement.setAttribute('data-gameshell-idle', ''), 2000);
+    };
+    for (const type of ['mousemove', 'mousedown', 'wheel']) addEventListener(type, wake, { capture: true, passive: true });
+    wake();
   });
 }

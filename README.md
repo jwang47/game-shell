@@ -22,8 +22,14 @@ Build a standalone exe at `dist\GameShell-win32-x64\GameShell.exe`
 npm run pack
 ```
 
-On the first run, a setup page asks for the game's URL. Press **Ctrl+,** to
-change it later. `--url=URL` also sets it and remembers it.
+`npm run release` also writes `distGameShell-<version>-win32-x64.zip` to
+attach to a GitHub Release. There is no auto-update yet: it needs a public
+repository (or a download token) and, to avoid SmartScreen warnings, a
+code-signing certificate.
+
+On the first run, a setup page asks for the game's URL and lists three
+one-time Windows settings (Game Mode, Do Not Disturb, G-SYNC/FreeSync). Press
+**Ctrl+,** to change it later; the window title reminds you. `--url=URL` also sets it and remembers it.
 
 Settings are kept in `%APPDATA%\GameShell`: `settings.json` (URL),
 `window.json` (size, position, fullscreen) and `passwords.json` (saved logins).
@@ -71,6 +77,9 @@ Electron has no Chrome password manager, so the app has its own:
 | Network | If the page fails to load, the app tries again after 3 s. A newer navigation cancels the retry. | — |
 | Popups | http(s) popups (OAuth sign-in) open as windows owned by the window that opened them, so they stay above the game. The same rules apply in popups and their popups. `mailto:` links go to the OS. All other schemes (`file:`, app protocols) are refused, for links, navigations and redirects. | — |
 | Power | Stops the display from going to sleep while the app runs. | — |
+| Windows key and accessibility prompts | While the game is fullscreen and in front, a lone press of the Windows key does not open the Start menu, and the Sticky Keys, Toggle Keys and Filter Keys shortcut prompts (Shift five times, ...) are off, as Microsoft recommends for games. Win+key combinations (Win+G, Win+Shift+S, ...) still work. The shortcuts come back when the game leaves the front or the app quits. `--allow-win-key` turns this off. See `keyguard.js`. | A shortcut is left alone when its feature is already on. The change is never saved, so a crash cannot leave it behind after sign-out. |
+| Accidental keys | App shortcuts need Ctrl (F11 aside), so F5 and F12 reach the game instead of reloading it. | — |
+| Cursor | The mouse cursor hides after 2 s without movement and comes back when you move it. | — |
 
 ## Keys
 
@@ -78,8 +87,8 @@ Electron has no Chrome password manager, so the app has its own:
 | --- | --- |
 | Ctrl+, | Setup page (URL, saved passwords) |
 | F11 | Fullscreen |
-| F5 / Ctrl+F5 | Reload / reload without cache |
-| F12 | DevTools |
+| Ctrl+F5 | Reload without cache |
+| Ctrl+Shift+I | DevTools |
 | Ctrl+Alt+B | Bring the window to the front (works from any app) |
 
 ## Flags
@@ -91,6 +100,7 @@ Give flags to `npm start -- <flags>` or to `GameShell.exe`.
 | `--url=URL` | Open this URL and remember it |
 | `--priority=high\|abovenormal\|normal` | CPU priority (default `high`) |
 | `--windowed` | Start windowed instead of fullscreen |
+| `--allow-win-key` | Let the Windows key and accessibility shortcut prompts work while playing |
 | `--pause-on-blur` | Let the game see focus loss (window `blur`, hidden page) as in a browser |
 | `--angle=d3d11\|vulkan\|gl` | WebGL backend (default `d3d11`). With `vulkan`, WebGPU finds no adapter. |
 | `--uncapped-fps` | Remove the vsync frame limit. Not recommended: alone it made key-to-screen latency much worse. |
@@ -102,9 +112,13 @@ Give flags to `npm start -- <flags>` or to `GameShell.exe`.
 
 ## Check
 
-- `npm test` runs the login, popup, low-latency and focus checks in hidden windows
+- `npm test` runs the keyguard, login, popup, low-latency, focus and keys checks in hidden windows
   (`GAMESHELL_TEST=1`) against local test pages. It needs no account, and it
   opens no visible window.
+- `node test/visible.mjs` checks real key presses on a visible fullscreen
+  window: the title hint, F5 and Ctrl+F5, the lone Windows key, and the
+  accessibility shortcuts while playing and after exit. It takes over the
+  screen and keyboard for about 15 s.
 - `npx electron . --smoke-test --url=URL` must exit 0. All process priorities
   must be `-14` (`HIGH`), and `webgl` must name the discrete GPU.
 - `GAMESHELL_TEST=1` hides the window, starts windowed and answers the

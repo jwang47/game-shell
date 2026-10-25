@@ -20,6 +20,9 @@
   ul { list-style: none; padding: 0; margin: 0; }
   li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px solid #1f2328; }
   .keys { color: #6f7781; font-size: 13px; margin-top: 28px; }
+  ol.tips { padding-left: 20px; margin: 0; color: #9aa1aa; font-size: 14px; }
+  ol.tips li { display: list-item; border: 0; padding: 2px 0; }
+  ol.tips b { color: #e6e8eb; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -31,9 +34,15 @@
     <button>Open</button>
   </form>
   <div id="error"></div>
+  <h2>Once, for the best experience</h2>
+  <ol class="tips">
+    <li><b>Game Mode:</b> in the game, press Win+G → Settings → "Remember this is a game".</li>
+    <li><b>No notifications:</b> Windows Settings → System → Notifications → do not disturb "When using an app in full-screen mode".</li>
+    <li><b>G-SYNC / FreeSync:</b> on for windowed and full screen (NVIDIA Control Panel or AMD Software).</li>
+  </ol>
   <h2>Saved passwords</h2>
   <ul id="sites"><li>None</li></ul>
-  <div class="keys">F11 fullscreen · F5 reload · F12 DevTools · Ctrl+Alt+B bring to front</div>
+  <div class="keys">F11 fullscreen · Ctrl+F5 reload · Ctrl+Shift+I DevTools · Ctrl+Alt+B bring to front</div>
 </main>
 <script>
   const $ = (id) => document.getElementById(id);

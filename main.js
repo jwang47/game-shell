@@ -5,6 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { pathToFileURL } = require('url');
+const { createKeyguard } = require('./keyguard');
 
 function arg(name) {
   const hit = process.argv.find((a) => a === `--${name}` || a.startsWith(`--${name}=`));
@@ -174,6 +175,14 @@ async function offerToSave(login, verified) {
 }
 
 let win;
+let keyguard = null;
+
+// Keyguard (keyguard.js) only while the game is fullscreen, in front and on a
+// web page; never on the setup page or in another app.
+function updateKeyguard() {
+  if (!keyguard || !win || win.isDestroyed()) return;
+  keyguard.setActive(win.isFocused() && win.isFullScreen() && /^https?:/.test(win.webContents.getURL()));
+}
 
 // Link policy for every page window, popups and their popups included:
 // http(s) popups open in the app, owned by the window that opened them, so
@@ -310,6 +319,7 @@ function createWindow(startUrl) {
     backgroundColor: '#000000',
     autoHideMenuBar: true,
     title: 'GameShell',
+    icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: {
       partition: PARTITION, // keep logins between runs
       preload: path.join(__dirname, 'preload.js'),
@@ -323,11 +333,19 @@ function createWindow(startUrl) {
     },
   });
   win.setMenu(null);
+  // The title (taskbar, Alt+Tab, windowed mode) reminds people how to get back
+  // to the setup page.
+  win.on('page-title-updated', (e, title) => {
+    e.preventDefault();
+    win.setTitle(`${title || 'GameShell'} · Ctrl+, settings`);
+  });
   if (saved.maximized) win.maximize();
   win.on('close', saveBounds);
   // After a UAC prompt or Alt+Tab, give the page keyboard focus again so keys
   // work without a click.
   win.on('focus', () => win.webContents.focus());
+  for (const event of ['focus', 'blur', 'enter-full-screen', 'leave-full-screen', 'minimize', 'restore']) win.on(event, updateKeyguard);
+  win.webContents.on('did-navigate', updateKeyguard);
 
   // Some sign-in providers refuse user agents that name Electron.
   const ua = win.webContents.getUserAgent()
@@ -336,16 +354,22 @@ function createWindow(startUrl) {
   win.webContents.setUserAgent(ua);
   win.webContents.setBackgroundThrottling(false);
 
+  // App keys need Ctrl (F11 aside), so a stray F5 or F12 reaches the game
+  // instead of reloading it mid-race.
   win.webContents.on('before-input-event', (e, input) => {
     if (input.type !== 'keyDown') return;
-    const key = input.key;
-    if (key === 'F11') win.setFullScreen(!win.isFullScreen());
-    else if (key === 'F5' && input.control) win.webContents.reloadIgnoringCache();
-    else if (key === 'F5') win.webContents.reload();
-    else if (key === 'F12') win.webContents.toggleDevTools();
+    const key = input.key.toLowerCase();
+    if (key === 'f11') win.setFullScreen(!win.isFullScreen());
+    else if (key === 'f5' && input.control) win.webContents.reloadIgnoringCache();
+    else if (key === 'i' && input.control && input.shift) win.webContents.toggleDevTools();
     else if (key === ',' && input.control) win.loadFile(SETUP_PAGE);
     else return;
     e.preventDefault();
+  });
+  // The preload sets data-gameshell-idle on <html> after 2 s without mouse
+  // movement. insertCSS is not subject to the page's CSP.
+  win.webContents.on('dom-ready', () => {
+    win.webContents.insertCSS('html[data-gameshell-idle], html[data-gameshell-idle] * { cursor: none !important; }').catch(() => {});
   });
 
   trackLoginNavigation(win.webContents);
@@ -438,7 +462,9 @@ if (!app.requestSingleInstanceLock()) {
     }
     keepSessionCookies(session.fromPartition(PARTITION));
     if (!TEST) powerSaveBlocker.start('prevent-display-sleep');
+    if (!arg('allow-win-key')) keyguard = createKeyguard();
     createWindow(startUrl);
+    updateKeyguard();
     // Bring the window back from anywhere, even when another app holds focus.
     globalShortcut.register('Control+Alt+B', () => {
       if (win.isMinimized()) win.restore();
@@ -454,5 +480,7 @@ if (!app.requestSingleInstanceLock()) {
 
   // Write cookies to disk before exit so a fresh login is not lost.
   app.on('before-quit', () => session.fromPartition(PARTITION).cookies.flushStore());
+  // Put the accessibility shortcuts back and remove the keyboard hook.
+  app.on('will-quit', () => keyguard?.dispose());
   app.on('window-all-closed', () => app.quit());
 }

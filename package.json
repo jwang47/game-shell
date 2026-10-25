@@ -9,14 +9,16 @@
     "postinstall": "node node_modules/electron/install.js",
     "start": "electron .",
     "pack": "node pack.mjs",
-    "test": "node test/login.mjs && node test/popup.mjs && node test/low-latency.mjs && node test/focus.mjs"
+    "test": "node test/keyguard.mjs && node test/login.mjs && node test/popup.mjs && node test/low-latency.mjs && node test/focus.mjs && node test/keys.mjs",
+    "release": "node pack.mjs --zip"
   },
   "devDependencies": {
     "@electron/packager": "^20.3.0",
     "electron": "45.0.0"
   },
   "allowScripts": {
-    "electron@45.0.0": true
+    "electron@45.0.0": true,
+    "koffi@3.3.4": true
   },
   "license": "MIT",
   "repository": {
@@ -25,5 +27,8 @@
   },
   "engines": {
     "node": "^22.23.4 || ^24.22.1 || >=26.12.1"
+  },
+  "dependencies": {
+    "koffi": "3.3.4"
   }
 }
