@@ -50,6 +50,7 @@ http.createServer((req, res) => {
     }
     res.writeHead(200, { 'Content-Type': 'text/html' });
     if (url.pathname === '/about') return res.end('<title>About</title><p>about</p>');
+    if (url.pathname === '/other-account') return res.end(ajaxForm('ajax').replace('name="username"', 'name="username" value="another-user"'));
     if (sid && sessions.has(sid)) return res.end('<title>In game</title><h1 id=game>game</h1>');
     const mode = url.searchParams.get('mode') || 'ajax';
     res.end(mode === 'post' ? postForm(false) : ajaxForm(mode));
@@ -124,6 +125,8 @@ await b.send('Network.clearBrowserCookies');
 await b.go(`${base}?mode=ajax`);
 await sleep(800);
 results.autofill = (await b.evaluate(`[document.querySelector('[name=username]')?.value, document.querySelector('[name=password]')?.value === 'correct-horse-1'].join()`)) === 'tester2,true' ? 'pass' : 'FAIL';
+await b.go(`${base}other-account`);
+results.otherAccountNotFilled = (await b.evaluate(`[document.querySelector('[name=username]').value, document.querySelector('[name=password]').value].join()`)) === 'another-user,' ? 'pass' : 'FAIL';
 await b.close();
 console.log(JSON.stringify(results, null, 2));
 const failed = Object.entries(results).filter(([, v]) => v !== 'pass');

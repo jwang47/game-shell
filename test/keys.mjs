@@ -30,16 +30,33 @@ ws.onmessage = (m) => { const d = JSON.parse(m.data); waiting.get(d.id)?.(d); };
 const send = (method, params) => new Promise((r) => { waiting.set(++id, r); ws.send(JSON.stringify({ id, method, params })); });
 const ev = async (e) => (await send('Runtime.evaluate', { expression: e, returnByValue: true })).result?.result?.value;
 const press = async (key, code, vk) => {
-  await send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key, code, windowsVirtualKeyCode: vk });
-  await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode: vk });
+  await send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key, code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk });
 };
 
 const out = {};
+// Hidden hosted-runner windows may have no focused renderer for CDP input.
+await send('Emulation.setFocusEmulationEnabled', { enabled: true });
+// CDP readiness does not imply that the renderer is accepting keyboard input
+// yet. Handshake with a neutral key; do not retry the F-key assertions below.
+let inputReady = false;
+for (let attempt = 0; attempt < 50 && !inputReady; attempt++) {
+  await press('Shift', 'ShiftLeft', 16);
+  inputReady = await ev("keys.includes('Shift')");
+  if (!inputReady) await sleep(100);
+}
+if (!inputReady) {
+  child.kill();
+  srv.close();
+  throw new Error('Hidden renderer did not accept CDP keyboard input within 5 seconds');
+}
+await ev('keys.length = 0');
 const nonce = await ev('nonce');
 await press('F5', 'F5', 116);
 await press('F12', 'F12', 123);
 await sleep(500);
-out.fKeysReachGame = (await ev('keys.join()')) === 'F5,F12';
+out.receivedKeys = await ev('keys.join()');
+out.fKeysReachGame = out.receivedKeys === 'F5,F12';
 out.noReload = (await ev('nonce')) === nonce;
 await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 100, y: 100 });
 await sleep(300);
@@ -53,6 +70,6 @@ out.cursorBackOnMove = (await ev("getComputedStyle(document.body).cursor")) !== 
 console.log(JSON.stringify(out));
 child.kill();
 srv.close();
-const ok = Object.values(out).every(Boolean);
+const ok = Object.entries(out).filter(([key]) => key !== 'receivedKeys').every(([, value]) => value === true);
 console.log(`keys: ${ok ? 'pass' : 'FAIL'}`);
 process.exit(ok ? 0 : 1);

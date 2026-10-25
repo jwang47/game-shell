@@ -101,7 +101,8 @@ Electron has no Chrome password manager, so GameShell has its own.
   confirmed.
 - **Fill:** on the next visit, GameShell fills the username and password. A
   saved login goes only to pages of the same origin (scheme, host and port),
-  as Chromium reports it.
+  as Chromium reports it. It leaves the password blank if a different username
+  is already entered.
 - **Storage:** passwords are encrypted with Windows DPAPI (Electron
   `safeStorage`); only your Windows account can read them. Manage or forget
   them on the setup page.
@@ -194,9 +195,17 @@ token) and, to avoid SmartScreen warnings, a code-signing certificate.
 
 Checks:
 
-- `npm test` runs the keyguard, login, popup, low-latency, focus and keys
+- GitHub Actions runs `npm ci`, `npm audit --audit-level=high`, and `npm test` on Windows for pushes and pull
+  requests, using the Node version in `.nvmrc`. Canvas option forwarding is
+  checked without a GPU; the WebGL presentation check is skipped explicitly
+  on hosts that cannot create a WebGL context.
+
+- `npm test` runs the security, persistence, keyguard, login, popup, low-latency, focus and keys
   checks in hidden windows against local test pages. It needs no account and
   opens no visible window.
+- Security checks cover IPC sender authorization, credential origin isolation,
+  setup-page access, allowed URL schemes, and renderer isolation even when a
+  popup requests Node.js access. These are regression checks, not a full security audit.
 - `node test/visible.mjs` presses real keys on a visible fullscreen window:
   the title hint, F5 and Ctrl+F5, a lone Windows key, and the accessibility
   shortcuts while playing and after exit. It takes over the screen and
