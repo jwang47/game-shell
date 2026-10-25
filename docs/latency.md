@@ -120,3 +120,35 @@ control.
 - The pacing run for this setting failed (the harness stopped when Chrome's
   DevTools port was already closed; now fixed) and was not repeated, because
   the frame rate and latency did not change.
+
+# NVIDIA Max Frame Rate = 158 FPS
+
+Measured 2026-10-25, same session setup as above: NVIDIA Control Panel
+Max Frame Rate = 158 FPS (with Ultra and Vertical sync On) for `electron.exe`
+and `GameShell.exe`, G-SYNC Compatible on. Latency from `tools/latency.mjs`
+(2 runs × 150 presses), pacing from `tools/pacing.mjs` (PresentMon, 20 s).
+
+| Arm | Latency median ms (95% CI) | fps | Present mode | Dropped | Displayed time sd |
+| --- | --- | --- | --- | --- | --- |
+| Chrome (control) | 38.5 (38.3–38.9) | 163 | Independent Flip | 0.07% | 0.02 ms |
+| GameShell | 37.9 (37.4–38.7) | 165 | Independent Flip | 0.00% | 0.03 ms |
+| GameShell `--low-latency` | 23.7 (23.6–23.8) | 165 | Composed: Flip | 0.07% | 0.38 ms |
+
+- **The driver frame cap did not apply.** GameShell still presented at
+  165 fps, not 158, so G-SYNC stayed at the refresh cap and nothing changed.
+- Together with the Ultra result, NVIDIA's per-program settings do not reach
+  Chromium's presentation. Chromium presents through DirectComposition
+  swap chains from its GPU process, and the driver limiter and Ultra mode
+  appear to skip those. GameShell cannot use these driver settings, so a
+  `--setup-nvidia` command would do nothing.
+
+## Conclusion
+
+- Default GameShell (Independent Flip, about 38 ms, smooth pacing) is the
+  best balance found. It matches Chrome on an idle machine; its priority and
+  throttling changes matter when the machine is busy.
+- `--low-latency` is the only large gain (about 15 ms), and it costs frame
+  pacing (DWM composition, 10 times the display-time jitter). Keep it opt-in.
+- Larger gains need changes in the game: read input at the start of each
+  frame and render in the same frame, and keep frame times well under the
+  refresh interval.
