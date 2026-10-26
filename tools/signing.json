@@ -1,0 +1,10 @@
+{
+  "Endpoint": "https://wus2.codesigning.azure.net/",
+  "CodeSigningAccountName": "gameshelljwang47",
+  "CertificateProfileName": "public",
+  "ExcludeCredentials": [
+    "EnvironmentCredential", "WorkloadIdentityCredential", "ManagedIdentityCredential",
+    "SharedTokenCacheCredential", "VisualStudioCredential", "VisualStudioCodeCredential",
+    "AzurePowerShellCredential", "AzureDeveloperCliCredential", "InteractiveBrowserCredential"
+  ]
+}
