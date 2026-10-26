@@ -1,7 +1,8 @@
 {
   "name": "game-shell",
   "productName": "GameShell",
-  "version": "0.1.0",
+  "author": "Jiahua Wang",
+  "version": "0.2.0",
   "private": true,
   "description": "Electron shell for a web game on Windows: high process priority, fullscreen, GPU flags, saved logins",
   "main": "main.js",
@@ -9,13 +10,15 @@
     "postinstall": "node node_modules/electron/install.js",
     "start": "electron .",
     "pack": "node pack.mjs",
+    "installer": "node installer.mjs",
     "test:packaged": "node test/packaged.mjs",
     "test": "node test/security.mjs && node test/persistence.mjs && node test/keyguard.mjs && node test/login.mjs && node test/popup.mjs && node test/low-latency.mjs && node test/focus.mjs && node test/keys.mjs",
     "release": "node pack.mjs --zip"
   },
   "devDependencies": {
     "@electron/packager": "^20.3.0",
-    "electron": "45.0.0"
+    "electron": "45.0.0",
+    "electron-builder": "26.18.0"
   },
   "allowScripts": {
     "electron@45.0.0": true,

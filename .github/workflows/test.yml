@@ -15,7 +15,7 @@ concurrency:
 jobs:
   windows:
     runs-on: windows-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,3 +27,5 @@ jobs:
       - run: npm test
       - run: npm run pack
       - run: npm run test:packaged
+      - run: npm run installer
+      - run: ./test/installer.ps1

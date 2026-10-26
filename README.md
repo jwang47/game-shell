@@ -9,15 +9,21 @@ Windows 10/11, x64 only.
 
 ## Install
 
-1. Download `GameShell-<version>-win32-x64.zip` from
+1. Download `GameShell-<version>-Setup-x64.exe` from
    [Releases](https://github.com/jwang47/game-shell/releases).
-2. Unzip it anywhere, for example `C:\Games\GameShell`.
-3. Run `GameShell.exe`. The build is not code-signed, so Windows SmartScreen
+2. Run the installer. It installs for your Windows account without needing
+   administrator access and adds **GameShell** to the Start Menu.
+3. Open **GameShell** from the Start Menu. Windows SmartScreen
    may warn the first time: click **More info → Run anyway**.
 
-To update, replace the folder with a newer release. Your settings and login
-stay in `%APPDATA%\GameShell`. To uninstall, delete the folder and
-`%APPDATA%\GameShell`.
+To update, run the newer installer. To uninstall, use Windows Settings → Apps →
+Installed apps → GameShell. Settings and saved logins stay in
+`%APPDATA%\GameShell` through updates and uninstall; delete that folder manually
+if you also want to remove your data.
+
+For a portable installation, download `GameShell-<version>-win32-x64.zip`,
+unzip anywhere, and run `GameShell.exe`. Update by replacing that folder;
+uninstall by deleting it. Both versions use the same settings location.
 
 ## First run
 
@@ -167,6 +173,8 @@ scripts are allowed in `package.json`).
 | `npm start` | Run from source (`npm start -- --url=URL --windowed`) |
 | `npm test` | Hidden checks (see [Development](#development)) |
 | `npm run pack` | Build `dist\GameShell-win32-x64\GameShell.exe` |
+| `npm run installer` | Wrap the built app in `dist-installer\GameShell-<version>-Setup-x64.exe` (no publishing) |
+| `npm run installer -- --signed` | Sign the app, uninstaller, and installer using [Microsoft Artifact Signing](docs/signing.md) |
 | `npm run test:packaged` | Smoke-test the built Windows app in a hidden window (run `npm run pack` first) |
 | `npm run release` | Build and zip it as `dist\GameShell-<version>-win32-x64.zip` |
 
@@ -179,8 +187,9 @@ scripts are allowed in `package.json`).
 2. `npm test`, then `npm run release`.
 3. `gh release create v<version> dist\GameShell-<version>-win32-x64.zip --title "GameShell <version>" --notes "..."`.
 
-There is no auto-update yet. It needs a public repository (or a download
-token) and, to avoid SmartScreen warnings, a code-signing certificate.
+There is no auto-update yet. Release builds can be signed with Microsoft Artifact
+Signing; see [signing setup](docs/signing.md). New signed apps may still receive
+SmartScreen warnings while reputation builds.
 
 ## Development
 
@@ -205,6 +214,9 @@ Checks:
   from resolving through the source tree. It checks native keyguard loading,
   the bundled setup page and preload, navigation to a local game, renderer
   isolation, settings persistence, and clean shutdown with a temporary profile.
+- CI builds the per-user installer and checks install, Start Menu shortcuts,
+  app startup, reinstall, uninstall, and preservation of user data. The installer
+  lifecycle test refuses to run outside a disposable GitHub-hosted runner.
 
 - `npm test` runs the security, persistence, keyguard, login, popup, low-latency, focus and keys
   checks in hidden windows against local test pages. It needs no account and
